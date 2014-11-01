@@ -9,6 +9,9 @@
 //Applying arguments to a folder will override arguments for single files in this folder/subfolder.
 //Others arguments are coming Soon(tm).
 //
+//Ambient Light Adjustment
+blizzy\AmbientLightAdjustment -nn -nm -nr
+//
 ///AVC
 KSP-AVC\Textures\OverlayBackground.png
 KSP-AVC\Textures\DropDownBackground.png
@@ -22,6 +25,9 @@ BoulderCo\Clouds\Textures -nn -nm
 //
 //Final Frontier, no mipmaps needed
 Nereid\FinalFrontier -nm -nn -nr
+//
+//Interstellar, these textures need to be readable
+WarpPlugin\PlanetResourceData
 //
 //Karbonite pack: it seems like there's 2 textures with the same name but not the same extension. Can't convert them both to dds...
 UmbraSpaceIndustries\Karbonite\Parts\KA_LandingFrame
@@ -38,8 +44,15 @@ KerbalEngineer\Textures\ToolbarIcon.png -nn -nm
 //kOS Screen (plugin is hard-coded to look for png, but parts textures are converted correctly)
 kOS\GFX
 //
+//NavUtils, better not resize anything, and some textures don't like to be set as read-only
+KerbalScienceFoundation\NavInstruments\PluginData\NavUtilLib
+KerbalScienceFoundation -nr -nm -nn
+//
 //NavyFish's Docking Port Alignment Indicator is looking for png (hard-coded)
 NavyFish
+//
+//PartAngleDisplay, looks for a png file (hard-coded)
+PartAngleDisplay\applaunch.png
 //
 //PartCatalog is looking for png, hard-coded
 PartCatalog

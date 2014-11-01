@@ -1,0 +1,63 @@
+﻿//Some mods can't use dds textures yet or this program have problems converting them in the correct format. All mods folders listed below will be skipped during a folder conversion (case-sensitive), or will have forced parameters applied.
+//You can specify a folder, or a file directly. Folders listed will include their sub-directories
+// if you use any argument, the folder is not skipped and all files in it will be treated accordingly.
+//Available arguments :
+//	" -fn" (Force Normals): Force all files to be considered as normals. They will be swizzled to xRxG format and flagged as normal.
+//	" -nn" (Not Normals): Force all files to skip automatic normal detection and to be flagged as not normal.
+//	" -nr" (No Resize): Skip resizing for files in the folder. Relevant only if you use the resizing option.
+//	" -nm" (No Mipmaps): Deactivate mipmaps generation for files in the folder.
+//Applying arguments to a folder will override arguments for single files in this folder/subfolder.
+//Others arguments are coming Soon(tm).
+//
+///AVC
+KSP-AVC\Textures\OverlayBackground.png
+KSP-AVC\Textures\DropDownBackground.png
+KSP-AVC\Textures\DropDownNormal.png
+KSP-AVC\Textures -nm -nn -nr
+//
+//EVE+BetterAtmo
+BoulderCo\Clouds\Textures\atmo.png
+BoulderCo\Clouds\Textures\kerbin1.png
+BoulderCo\Clouds\Textures -nn -nm
+//
+//Final Frontier, no mipmaps needed
+Nereid\FinalFrontier -nm -nn -nr
+//
+//Karbonite pack: it seems like there's 2 textures with the same name but not the same extension. Can't convert them both to dds...
+UmbraSpaceIndustries\Karbonite\Parts\KA_LandingFrame
+//
+//Karbonite Plus. Not sure why this one throw an error, both files in this folder seems to be converted properly...
+UmbraSpaceIndustries\AES\Spaces
+//
+//Kerbal Alarm clock. Plugin looks for png files (hard-coded).
+TriggerTech
+//
+//Kerbal Engineer
+KerbalEngineer\Textures\ToolbarIcon.png -nn -nm
+//
+//kOS Screen (plugin is hard-coded to look for png, but parts textures are converted correctly)
+kOS\GFX
+//
+//NavyFish's Docking Port Alignment Indicator is looking for png (hard-coded)
+NavyFish
+//
+//PartCatalog is looking for png, hard-coded
+PartCatalog
+//
+//RasterPropMonitors: Don't resize the navball, or it'll be a blurry mess. Same for the screen behind it.
+JSI\RasterPropMonitor\Library\Components\NavBall\NavBall000.png -nr
+JSI\RasterPropMonitor\Library\Components\NavBall\StaticMask.png -nr
+//
+//Squad: Avoid Screenshots folder (just in case, but this shouldn't happen) and avoid resizing flags and companies logos
+Flags -nr
+Agencies -nr
+Screenshots
+//
+//StageRecovery
+StageRecovery -nm -nr -nn
+//
+//TextureReplacer's helmet visor, this prog still can't get the p8 format, but nvdxt or crunch could probably do it.
+TextureReplacer\EnvMap
+//
+//Toolbar, no mipmaps and no resize
+000_Toolbar -nm -nr

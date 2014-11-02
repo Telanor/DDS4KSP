@@ -95,77 +95,88 @@ namespace DDS4KSPcs
 		//refresh labels infos
 		public static void RefreshInfo(string sFilePath, out string txtRes, out string txtColDepth, out string txtNormal)
 		{
+			bool bFailToLoad;
 			var infos1 = TextureLoader.ImageInformationFromFile(sFilePath);
+
 			txtRes = "Resolution : " + infos1.Width + "x" + infos1.Height;
 			txtColDepth = "Color depth : " + infos1.Format;
-			var bFailToLoad = new bool();
-			txtNormal = "Normal map : " + AssumeNormalMap(sFilePath, ref bFailToLoad);
+			txtNormal = "Normal map : " + AssumeNormalMap(sFilePath, out bFailToLoad);
 		}
 
 		//Guess if texture is a normal map
-		public static bool AssumeNormalMap(string sFilePath, ref bool bFailToLoad)
+		public static bool AssumeNormalMap(string sFilePath, out bool bFailToLoad)
 		{
 			var bNorm = DetectNormalFromTextureName(sFilePath);
+
+			bFailToLoad = false;
 			//todo: find a proper way to determine if a texture is a normalmap
 			if(!bNorm)
-				bNorm = DetectNormalFromTexturePattern(sFilePath, ref bFailToLoad);
+				bNorm = DetectNormalFromTexturePattern(sFilePath, out bFailToLoad);
+
 			return bNorm;
 		}
 
 		private static readonly string[] normalFileNames = { "nrm", "nm", "normal" };
 
 		//check the texture filename to determine if it's a normalmap
-		private static bool DetectNormalFromTextureName(string sFilePath)
+		private static bool DetectNormalFromTextureName(string filePath)
 		{
-			var fileName = Path.GetFileName(sFilePath);
+			var fileName = Path.GetFileName(filePath);
 
 			return normalFileNames.Any(name => fileName != null && CultureInfo.CurrentCulture.CompareInfo.IndexOf(fileName, name, CompareOptions.IgnoreCase) >= 0);
 		}
 		//there is probably a better way to do that... Doing this with DX is still faster than using a bitmap, anyway...good enough...
-		private static bool DetectNormalFromTexturePattern(string sFilePath, ref bool bFailToLoad)
+		private static bool DetectNormalFromTexturePattern(string filePath, out bool failToLoad)
 		{
 			//the pattern we are looking for is actually "is blue channel always 0xFF?", this function return true if it does, false otherwise
 			//It assume a file loaded from a tga, since normalmaps are not usually saved as pngs
 			var bBool = true;
+			failToLoad = false;
+
 			try
 			{
-				var t = TextureLoader.FromFile(dev, sFilePath);
-				var gs1 = TextureLoader.SaveToStream(ImageFileFormat.Tga, t);
-				var buff = new byte[gs1.Length];
-				gs1.Read(buff, 0, (int)gs1.Length);
-				var ii = TextureLoader.ImageInformationFromFile(sFilePath);
-				var iStep = 3;
-				if(ii.Format == Format.A8R8G8B8)
-					iStep = 4;
-				var startIndex = 0x1f;
-				while(startIndex < gs1.Length)
+				using(var t = TextureLoader.FromFile(dev, filePath))
 				{
-					if(buff[startIndex] != 0xff)
+					using(var gs1 = TextureLoader.SaveToStream(ImageFileFormat.Tga, t))
 					{
-						bBool = false;
-						startIndex = (int)gs1.Length;
+						var buff = new byte[gs1.Length];
+						gs1.Read(buff, 0, (int) gs1.Length);
+						var ii = TextureLoader.ImageInformationFromFile(filePath);
+						var iStep = 3;
+						
+						if(ii.Format == Format.A8R8G8B8)
+							iStep = 4;
+						var startIndex = 0x1f;
+
+						while(startIndex < gs1.Length)
+						{
+							if(buff[startIndex] != 0xff)
+							{
+								bBool = false;
+								startIndex = (int) gs1.Length;
+							}
+							startIndex += iStep;
+						}
 					}
-					startIndex += iStep;
 				}
-				t.Dispose();
-				gs1.Dispose();
-				gs1.Close();
 			}
 			catch(Exception)
 			{
-				bFailToLoad = true;
-				MainForm.Instance.Log_WriteLine("ERR : Can't read " + sFilePath + ", skipping file.");
+				failToLoad = true;
+				MainForm.Instance.Log_WriteLine("ERR : Can't read " + filePath + ", skipping file.");
 			}
+
 			return bBool;
 		}
 
 		//retrieve informations about a file from it's path
-		public static void GetImageInfo(string sFilePath, out string sFormat, out int iWidht, out int iHeight)
+		public static void GetImageInfo(string filePath, out string format, out int width, out int height)
 		{
-			var ii = TextureLoader.ImageInformationFromFile(sFilePath);
-			sFormat = ii.Format.ToString();
-			iWidht = ii.Width;
-			iHeight = ii.Height;
+			var imageInformation = TextureLoader.ImageInformationFromFile(filePath);
+
+			format = imageInformation.Format.ToString();
+			width = imageInformation.Width;
+			height = imageInformation.Height;
 		}
 
 		//function to check if the file use a 32 or a 24-bits palette
@@ -195,7 +206,7 @@ namespace DDS4KSPcs
 			switch(convParams.NormalMapConversion)
 			{
 				case NormalMapConversion.Automatic:
-					bNormal = AssumeNormalMap(convParams.FilePath, ref bLoadFail);
+					bNormal = AssumeNormalMap(convParams.FilePath, out bLoadFail);
 					break;
 				case NormalMapConversion.ForceNormal:
 					bNormal = true;
@@ -207,7 +218,7 @@ namespace DDS4KSPcs
 				return;
 
 			//get a new filepath for our newly created dds
-			var fpNew = convParams.FilePath.Remove(convParams.FilePath.Length - 4, 4) + ".dds";
+			var fpNew = Path.ChangeExtension(convParams.FilePath, ".dds");
 			//retrive infos from the original file
 			var iInfos = TextureLoader.ImageInformationFromFile(convParams.FilePath);
 
@@ -367,7 +378,7 @@ namespace DDS4KSPcs
 		public static void ConvertMbmtoDDS(ConversionParameters convParams, FolderProcessingParams cfg)
 		{
 			//get a new filepath with a dds extension
-			var fpNew = convParams.FilePath.Remove(convParams.FilePath.Length - 4, 4) + ".dds";
+			var fpNew = Path.ChangeExtension(convParams.FilePath, ".dds");
 
 			//open a new mbm file
 			var mbmTemp = new MBMLoader.MBMFile(convParams.FilePath);
@@ -382,7 +393,6 @@ namespace DDS4KSPcs
 			if(convParams.MipmapSetting == MipmapSetting.DontGenerate)
 				mipmapLevel = 1;
 
-
 			//output format
 			var form = default(Format);
 			switch(convParams.OutputFormat)
@@ -390,8 +400,10 @@ namespace DDS4KSPcs
 				case OutputFormat.AutoUncompressed:
 					if(mbmTemp.IsNormal)
 						form = Format.A8R8G8B8;
-					else
-						form = mbmTemp.ColorDepth == 24 ? Format.R8G8B8 : Format.A8R8G8B8;
+					else if(mbmTemp.ColorDepth == 24) 
+						form = Format.R8G8B8;
+					else 
+						form = Format.A8R8G8B8;
 					break;
 				case OutputFormat.AutoCompressed:
 					form = mbmTemp.ColorDepth == 24 ? Format.Dxt1 : Format.Dxt5;
@@ -423,28 +435,31 @@ namespace DDS4KSPcs
 			}
 
 			//conversion
-			var gs = new MemoryStream();
-			mbmTemp.AsBitmap().Save(gs, ImageFormat.Bmp);
-			MainForm.Instance.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
-			MainForm.Instance.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (mbmTemp.Width * dRatio) + "x" + (mbmTemp.Height * dRatio));
-			if((((mbmTemp.Width < cfg.MinRes_Resize_Width) | (mbmTemp.Height < cfg.MinRes_Resize_Height)) & (Math.Abs(dRatio - 1) > 0.0001f)))
+			using(var gs = new MemoryStream())
 			{
-				MainForm.Instance.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
-				dRatio = 1;
-			}
-			gs.Position = 0;
-			var t = TextureLoader.FromStream(dev, gs, (int) (mbmTemp.Width * dRatio), (int) (mbmTemp.Height * dRatio), mipmapLevel, Usage.None, form, Pool.SystemMemory, Filter.Triangle | Filter.Dither, Filter.Triangle | Filter.Dither,
-			0);
-			gs.Close();
-			gs.Dispose();
-			TextureLoader.Save(fpNew, ImageFileFormat.Dds, t);
+				mbmTemp.AsBitmap().Save(gs, ImageFormat.Bmp);
+				
+				MainForm.Instance.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
+				MainForm.Instance.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (mbmTemp.Width * dRatio) + "x" + (mbmTemp.Height * dRatio));
+				
+				if((((mbmTemp.Width < cfg.MinRes_Resize_Width) | (mbmTemp.Height < cfg.MinRes_Resize_Height)) & (Math.Abs(dRatio - 1) > 0.0001f)))
+				{
+					MainForm.Instance.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
+					dRatio = 1;
+				}
+				gs.Position = 0;
 
+				using(var t = TextureLoader.FromStream(dev, gs, (int) (mbmTemp.Width * dRatio), (int) (mbmTemp.Height * dRatio), mipmapLevel, Usage.None, form, Pool.SystemMemory, Filter.Triangle | Filter.Dither, Filter.Triangle | Filter.Dither, 0))
+				{
+					TextureLoader.Save(fpNew, ImageFileFormat.Dds, t);
+				}
+			}
+			
 			//set flag for dxt5nm
 			if(bNormal)
 				MarkAsNormal(fpNew);
 
 			//flush textures
-			t.Dispose();
 			mbmTemp.Flush();
 
 			//delete file after successful conversion
@@ -461,20 +476,23 @@ namespace DDS4KSPcs
 		private static void FlipImage(GraphicsStream gs)
 		{
 			gs.Position = 0;
-			var img = Image.FromStream(gs, true);
-			img.RotateFlip(RotateFlipType.RotateNoneFlipY);
-			img.Save(gs, ImageFormat.Bmp);
-			img.Dispose();
+			
+			using(var img = Image.FromStream(gs, true))
+			{
+				img.RotateFlip(RotateFlipType.RotateNoneFlipY);
+				img.Save(gs, ImageFormat.Bmp);
+			}
+			
 			gs.Position = 0;
 		}
 
 		//Swizzlin'
-		private static void SwizzleImage(GraphicsStream gs, int iWidth, int iHeight, bool b32BPP)
+		private static void SwizzleImage(GraphicsStream gs, int width, int height, bool b32BPP)
 		{
 			//since swizzling is only for normals, and those must be saved in dxt5 (or argb8), might as well ensure the texture is in the correct format.
 			if(!b32BPP)
 			{
-				var tTemp = TextureLoader.FromStream(dev, gs, iWidth, iHeight, 1, Usage.None, Format.A8B8G8R8, Pool.SystemMemory, Filter.None, Filter.None,
+				var tTemp = TextureLoader.FromStream(dev, gs, width, height, 1, Usage.None, Format.A8B8G8R8, Pool.SystemMemory, Filter.None, Filter.None,
 				0);
 				gs = TextureLoader.SaveToStream(ImageFileFormat.Tga, tTemp);
 				tTemp.Dispose();
@@ -493,11 +511,11 @@ namespace DDS4KSPcs
 				bSwizzled[i] = bOri[i];
 			}
 			//there's probably a better way to do that, but this one is self-explanatory...
-			for(var y = 0; y <= iHeight - 1; y++)
+			for(var y = 0; y <= height - 1; y++)
 			{
-				for(var x = 0; x <= iWidth - 1; x++)
+				for(var x = 0; x <= width - 1; x++)
 				{
-					var pos = (((y * iWidth) + x) * 4) + headerSize;
+					var pos = (((y * width) + x) * 4) + headerSize;
 
 					//b = bOri(pos)
 					var g = bOri[pos + 1];
@@ -516,10 +534,10 @@ namespace DDS4KSPcs
 		}
 
 		//set the "normal" flag
-		public static void MarkAsNormal(string sDDSFilePath)
+		public static void MarkAsNormal(string ddsFilePath)
 		{
 			//I could write a proper class to read DDS header and set all arguments properly, but this works just as well, and it's quite fast
-			var fs = File.Open(sDDSFilePath, FileMode.Open, FileAccess.ReadWrite);
+			var fs = File.Open(ddsFilePath, FileMode.Open, FileAccess.ReadWrite);
 			fs.Position = 0x53;
 			var b = (byte)fs.ReadByte();
 			fs.Position = 0x53;
@@ -554,6 +572,7 @@ namespace DDS4KSPcs
 			{
 				get { return normal; }
 			}
+
 			public AutoParameters(string filePath)
 			{
 				FilePath = filePath;
@@ -562,12 +581,13 @@ namespace DDS4KSPcs
 					MBMLoader.GetInfo(filePath, out width, out height, out normal, out format);
 				else
 				{
+					bool bFail;
 					var ii = TextureLoader.ImageInformationFromFile(filePath);
+
 					width = ii.Width;
 					height = ii.Height;
 					format = ii.Format.ToString();
-					var bFail = false;
-					normal = AssumeNormalMap(filePath, ref bFail);
+					normal = AssumeNormalMap(filePath, out bFail);
 
 					if(bFail)
 						normal = false;
@@ -580,42 +600,23 @@ namespace DDS4KSPcs
 		{
 			//store infos, I could have go with integers and boolean directly to store parameters instead of using enums, but it's easier to read this way
 
-			private string filepath;
 			public NormalMapConversion NormalMapConversion { get; set; }
 			public MipmapSetting MipmapSetting { get; set; }
 			public ResizeSetting ResizeSetting { get; set; }
 			public OutputFormat OutputFormat { get; set; }
-
-			public string FilePath
-			{
-				get { return filepath; }
-				set { filepath = value; }
-			}
-
 			public FileType FileType { get; set; }
-
-			//basic constructor. Default params means "all automatic"
-			public ConversionParameters(string sFilePath)
-			{
-				filepath = sFilePath;
-				FileType = Path.GetExtension(filepath) == ".mbm" ? FileType.MBM : FileType.Standard;
-				NormalMapConversion = NormalMapConversion.Automatic;
-				MipmapSetting = MipmapSetting.Generate;
-				ResizeSetting = ResizeSetting.AllowResize;
-				OutputFormat = OutputFormat.AutoCompressed;
-			}
+			public string FilePath { get; set; }
 
 			//create with parameters
-			public ConversionParameters(string sFilePath, NormalMapConversion eNormal, MipmapSetting eMipmaps, ResizeSetting eResize, OutputFormat eOutput)
+			public ConversionParameters(string filePath, NormalMapConversion normalMapConversion = NormalMapConversion.Automatic, MipmapSetting mipmapSetting = MipmapSetting.Generate, ResizeSetting resizeSetting = ResizeSetting.AllowResize, OutputFormat outputFormat = OutputFormat.AutoCompressed)
 			{
-				filepath = sFilePath;
-				FileType = Path.GetExtension(filepath) == ".mbm" ? FileType.MBM : FileType.Standard;
-				NormalMapConversion = eNormal;
-				MipmapSetting = eMipmaps;
-				ResizeSetting = eResize;
-				OutputFormat = eOutput;
+				FilePath = filePath;
+				FileType = Path.GetExtension(FilePath) == ".mbm" ? FileType.MBM : FileType.Standard;
+				NormalMapConversion = normalMapConversion;
+				MipmapSetting = mipmapSetting;
+				ResizeSetting = resizeSetting;
+				OutputFormat = outputFormat;
 			}
 		}
-
 	}
 }

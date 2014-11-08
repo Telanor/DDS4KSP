@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
@@ -51,7 +52,7 @@ namespace DDS4KSPcs
 		public static int MinWidthForCompressed = 64;
 
 		private static readonly List<Format> bppFormats32 = new List<Format>();
-		private static readonly List<Format> bbpFormats24 = new List<Format>();
+		private static readonly List<Format> bppFormats24 = new List<Format>();
 		private static readonly List<Format> bppFormatsSpecial = new List<Format>();
 
 		public enum DDSOutputFormat
@@ -66,12 +67,12 @@ namespace DDS4KSPcs
 		{
 			//list supported formats
 			bppFormats32.Clear();
-			bbpFormats24.Clear();
+			bppFormats24.Clear();
 			bppFormatsSpecial.Clear();
 			bppFormats32.Add(Format.A8R8G8B8);
 			bppFormats32.Add(Format.R8G8B8G8);
-			bbpFormats24.Add(Format.R8G8B8);
-			bbpFormats24.Add(Format.X8R8G8B8);
+			bppFormats24.Add(Format.R8G8B8);
+			bppFormats24.Add(Format.X8R8G8B8);
 			//those are usual format in KSPs mods, but the program can't convert them properly. I'll have to find a way to convert those
 			bppFormatsSpecial.Add(Format.P8);
 			bppFormatsSpecial.Add(Format.L8);
@@ -195,6 +196,7 @@ namespace DDS4KSPcs
 
 		public static void ConvertFileToDDS(ConversionParameters convParams, FolderProcessingParams cfg)
 		{
+			var sw = Stopwatch.StartNew();
 			//test: to avoid memory leak, reset the device before every conversion... As this program can't compile on for x64 OSs, large texture hit memory lmit quite fast...
 			//there's a known bug with DirectX9 and his way to load TGA files, image buffer is kept in memory even when the texture is disposed. And, of course, .NET's GarbageCollector is not useful AT ALL here...
 			ResetDevice();
@@ -302,16 +304,14 @@ namespace DDS4KSPcs
 
 			//bmp format for flipping
 			Texture texture;
-			if(bbpFormats24.Contains(iInfos.Format))
+			if(bppFormats24.Contains(iInfos.Format))
 			{
-				texture = TextureLoader.FromFile(dev, convParams.FilePath, iCorWidth, iCorHeight, 1, Usage.None, Format.R8G8B8, Pool.SystemMemory, Filter.None, Filter.None,
-				0);
+				texture = TextureLoader.FromFile(dev, convParams.FilePath, iCorWidth, iCorHeight, 1, Usage.None, Format.R8G8B8, Pool.SystemMemory, Filter.None, Filter.None, 0);
 				//t = TextureLoader.FromFile(dev, convParams.FilePath, iCorWidth, iCorHeight, 1, Usage.None, form, Pool.SystemMemory, Filter.None, Filter.None, 0)
 			}
 			else if(bppFormats32.Contains(iInfos.Format))
 			{
-				texture = TextureLoader.FromFile(dev, convParams.FilePath, iCorWidth, iCorHeight, 1, Usage.None, Format.A8B8G8R8, Pool.SystemMemory, Filter.None, Filter.None,
-				0);
+				texture = TextureLoader.FromFile(dev, convParams.FilePath, iCorWidth, iCorHeight, 1, Usage.None, Format.A8B8G8R8, Pool.SystemMemory, Filter.None, Filter.None, 0);
 			}
 			else
 			{
@@ -333,6 +333,7 @@ namespace DDS4KSPcs
 			//switch to tga format if swizzling 
 			if(bNormal)
 			{
+				var sw2 = Stopwatch.StartNew();
 				texture.Dispose();
 				texture = TextureLoader.FromStream(dev, gs);
 				gs.Close();
@@ -340,15 +341,16 @@ namespace DDS4KSPcs
 				gs = TextureLoader.SaveToStream(ImageFileFormat.Tga, texture);
 				texture.Dispose();
 				SwizzleImage(gs, iCorWidth, iCorHeight, Is32BPP(iInfos));
+				sw.Stop();
+				MainForm.Instance.Log_WriteLine(String.Format("SwizzleImage took {0}ms", sw2.Elapsed.TotalMilliseconds));
 			}
 
 			//another attempt to flush memory: the program tend to crash if too much large textures are converted
 			//though, if some smaller textures are converted in between, memory is flushed correctly...
 			dev.Reset(pParameters);
-
+			
 			//saving the texture
-			texture = TextureLoader.FromStream(dev, gs, (int) (iCorWidth * dRatio), (int) (iCorHeight * dRatio), mipmapLevel, Usage.None, form, Pool.SystemMemory, Filter.Triangle | Filter.DitherDiffusion, Filter.Triangle | Filter.DitherDiffusion,
-			0);
+			texture = TextureLoader.FromStream(dev, gs, (int) (iCorWidth * dRatio), (int) (iCorHeight * dRatio), mipmapLevel, Usage.None, form, Pool.SystemMemory, Filter.Triangle | Filter.DitherDiffusion, Filter.Triangle | Filter.DitherDiffusion, 0);
 			TextureLoader.Save(fpNew, ImageFileFormat.Dds, texture);
 			//delete unused stuff
 			texture.Dispose();
@@ -359,23 +361,30 @@ namespace DDS4KSPcs
 			if(bNormal)
 				MarkAsNormal(fpNew);
 
+			var ddsifiedFile = convParams.FilePath + ".ddsified";
+
 			//remove/Backup original file after successful conversion
 			if(File.Exists(fpNew))
 			{
 				if(cfg.BackupFile)
 				{
-					File.Move(convParams.FilePath, convParams.FilePath + ".ddsified");
+					if(File.Exists(ddsifiedFile))
+						File.Delete(ddsifiedFile);
+
+					File.Move(convParams.FilePath, ddsifiedFile);
 				}
 				else if(cfg.DeleteFilesOnSuccess)
 				{
 					File.Delete(convParams.FilePath);
 				}
 			}
+			sw.Stop();
 
+			MainForm.Instance.Log_WriteLine(String.Format("Image conversion took {0}ms", sw.Elapsed.TotalMilliseconds));
 		}
 
 		//Convert a mbm file to dds
-		public static void ConvertMbmtoDDS(ConversionParameters convParams, FolderProcessingParams cfg)
+		public static void ConvertMBMtoDDS(ConversionParameters convParams, FolderProcessingParams cfg)
 		{
 			//get a new filepath with a dds extension
 			var fpNew = Path.ChangeExtension(convParams.FilePath, ".dds");
@@ -462,11 +471,18 @@ namespace DDS4KSPcs
 			//flush textures
 			mbmTemp.Flush();
 
+			var ddsifiedFile = convParams.FilePath + ".ddsified";
+
 			//delete file after successful conversion
 			if(File.Exists(fpNew))
 			{
 				if(cfg.BackupFile)
+				{
+					if(File.Exists(ddsifiedFile))
+						File.Delete(ddsifiedFile);
+
 					File.Move(convParams.FilePath, convParams.FilePath + ".ddsified");
+				}
 				else if(cfg.DeleteFilesOnSuccess)
 					File.Delete(convParams.FilePath);
 			}
@@ -475,6 +491,7 @@ namespace DDS4KSPcs
 		//flip the image.
 		private static void FlipImage(GraphicsStream gs)
 		{
+			var sw = Stopwatch.StartNew();
 			gs.Position = 0;
 			
 			using(var img = Image.FromStream(gs, true))
@@ -484,6 +501,8 @@ namespace DDS4KSPcs
 			}
 			
 			gs.Position = 0;
+			sw.Stop();
+			MainForm.Instance.Log_WriteLine(String.Format("FlipImage took {0}ms", sw.Elapsed.TotalMilliseconds));
 		}
 
 		//Swizzlin'

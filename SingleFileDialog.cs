@@ -110,7 +110,7 @@ namespace DDS4KSPcs
 				folderCFG.BackupFile = false;
 
 				if(imgCFG.FileType == ImageManager.FileType.MBM)
-					ImageManager.ConvertMbmtoDDS(imgCFG, folderCFG);
+					ImageManager.ConvertMBMtoDDS(imgCFG, folderCFG);
 				else
 					ImageManager.ConvertFileToDDS(imgCFG, folderCFG);
 

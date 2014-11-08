@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -85,11 +86,13 @@ namespace DDS4KSPcs
 			MainForm.Instance.Log_WriteLine("    PNG count : " + argHandler.Count_PNG + ".");
 			MainForm.Instance.Log_WriteLine(iExcludeCount + " files excluded, " + argHandler.Count_NoMipmaps + " files without mipmaps. " + (argHandler.Count_ForceNormal + argHandler.Count_ForceNotNormal) + " files will skip normal detection." + argHandler.Count_NoResize + " files will not be resized.");
 			MainForm.Instance.Log_WriteLine("-----");
+
+			var sw = Stopwatch.StartNew();
 			//processing
 			foreach(var c in lConvParms)
 			{
 				if(c.FileType == ImageManager.FileType.MBM)
-					ImageManager.ConvertMbmtoDDS(c, cfg);
+					ImageManager.ConvertMBMtoDDS(c, cfg);
 				else
 					ImageManager.ConvertFileToDDS(c, cfg);
 				iStep += 1;
@@ -99,8 +102,9 @@ namespace DDS4KSPcs
 				Application.DoEvents();
 			}
 
+			sw.Stop();
 			MainForm.Instance.Log_WriteLine("-----");
-			MainForm.Instance.Log_WriteLine("Conversion done! " + lConvParms.Count + " files processed.");
+			MainForm.Instance.Log_WriteLine(String.Format("Conversion done! {0} files processed in {1}ms.", lConvParms.Count, sw.Elapsed.TotalMilliseconds));
 			if(FileSkipCount > 0)
 				MainForm.Instance.Log_WriteLine(FileSkipCount + " files skipped, check log.txt for more informations.");
 			MainForm.Instance.Log_WriteLine("-----");
@@ -110,6 +114,9 @@ namespace DDS4KSPcs
 		public static void BackupFiles(string sFolderPath, ProgressBar progressBar, Label lInfos)
 		{
 			var st = "";
+			var dontAskAgain = false;
+			var yesNo = false;
+			var deleteBackups = false;
 			RefreshInfo(sFolderPath, st, st, false);
 			var iStep = 0;
 			
@@ -125,9 +132,36 @@ namespace DDS4KSPcs
 				if(File.Exists(sDDSToDelete))
 					File.Delete(sDDSToDelete);
 
-				File.Move(s, sBackupFile);
-				MainForm.Instance.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
-				
+				if(File.Exists(sBackupFile))
+				{
+					if(!dontAskAgain)
+					{
+						var dialog = new OverwriteFileDialog();
+
+						yesNo = (dialog.CustomShowDialog(sBackupFile, out dontAskAgain, ref deleteBackups) == DialogResult.Yes);
+					}
+
+					if(yesNo)
+					{
+						File.Delete(sBackupFile);
+						File.Move(s, sBackupFile);
+
+						MainForm.Instance.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
+					}
+					else
+					{
+						if(deleteBackups)
+							File.Delete(s);
+
+						MainForm.Instance.Log_WriteLine("Skipping backup of " + sBackupFile);
+					}
+				}
+				else
+				{
+					File.Move(s, sBackupFile);
+					MainForm.Instance.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
+				}
+
 				iStep += 1;
 				progressBar.Value = Convert.ToInt32((iStep / backupList.Count) * 100);
 				lInfos.Text = "Reverting " + Path.GetFileName(sBackupFile) + ", file " + iStep + "\\" + backupList.Count;

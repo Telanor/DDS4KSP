@@ -164,7 +164,7 @@ namespace DDS4KSPcs
 			catch(Exception)
 			{
 				failToLoad = true;
-				MainForm.Instance.Log_WriteLine("ERR : Can't read " + filePath + ", skipping file.");
+				MainForm.Log_WriteLine("ERR : Can't read " + filePath + ", skipping file.");
 			}
 
 			return bBool;
@@ -266,13 +266,13 @@ namespace DDS4KSPcs
 			}
 
 			//info for log
-			MainForm.Instance.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
+			MainForm.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
 
 			//keep small images uncompressed. This is independent from any parameters, the value of 64 is hard-coded
 			if(((iInfos.Width < MinHeightForCompressed) | (iInfos.Height < MinHeightForCompressed)))
 			{
 				if(((form == Format.Dxt1) | (form == Format.Dxt5)))
-					MainForm.Instance.Log_WriteLine("LOG : Resolution is considered too low for DXT compression. Switching to uncompressed format for better quality.");
+					MainForm.Log_WriteLine("LOG : Resolution is considered too low for DXT compression. Switching to uncompressed format for better quality.");
 				form = Format.A8R8G8B8;
 				mipmapLevel = 1;
 			}
@@ -281,7 +281,7 @@ namespace DDS4KSPcs
 			//skip file if the resolution is not correct
 			if(((iInfos.Width < cfg.MinRes_Process_Width) | (iInfos.Height < cfg.MinRes_Process_Width)))
 			{
-				MainForm.Instance.Log_WriteLine("LOG : Skipping " + convParams.FilePath + ", resolution is too low.");
+				MainForm.Log_WriteLine("LOG : Skipping " + convParams.FilePath + ", resolution is too low.");
 				FolderLoader.FileSkipCount += 1;
 				return;
 			}
@@ -289,7 +289,7 @@ namespace DDS4KSPcs
 			//check if the file is large enough to be resized
 			if((((iInfos.Width < cfg.MinRes_Resize_Width) | (iInfos.Height < cfg.MinRes_Resize_Height)) & (Math.Abs(dRatio - 1) > 0.0001f)))
 			{
-				MainForm.Instance.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
+				MainForm.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
 				dRatio = 1;
 			}
 
@@ -315,13 +315,13 @@ namespace DDS4KSPcs
 			}
 			else
 			{
-				MainForm.Instance.Log_WriteLine("ERR : Unknown file format " + iInfos.Format + ", skipping conversion for " + convParams.FilePath);
+				MainForm.Log_WriteLine("ERR : Unknown file format " + iInfos.Format + ", skipping conversion for " + convParams.FilePath);
 				FolderLoader.FileSkipCount += 1;
 				return;
 			}
 
 			//info for log
-			MainForm.Instance.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (iCorWidth * dRatio) + "x" + (iCorHeight * dRatio));
+			MainForm.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (iCorWidth * dRatio) + "x" + (iCorHeight * dRatio));
 
 			//the output is saved in a graphicStream, but a memorystream could work just as well.
 			var gs = TextureLoader.SaveToStream(ImageFileFormat.Bmp, texture);
@@ -342,7 +342,7 @@ namespace DDS4KSPcs
 				texture.Dispose();
 				SwizzleImage(gs, iCorWidth, iCorHeight, Is32BPP(iInfos));
 				sw.Stop();
-				MainForm.Instance.Log_WriteLine(String.Format("SwizzleImage took {0}ms", sw2.Elapsed.TotalMilliseconds));
+				MainForm.Log_WriteLine(String.Format("SwizzleImage took {0}ms", sw2.Elapsed.TotalMilliseconds));
 			}
 
 			//another attempt to flush memory: the program tend to crash if too much large textures are converted
@@ -380,7 +380,7 @@ namespace DDS4KSPcs
 			}
 			sw.Stop();
 
-			MainForm.Instance.Log_WriteLine(String.Format("Image conversion took {0}ms", sw.Elapsed.TotalMilliseconds));
+			MainForm.Log_WriteLine(String.Format("Image conversion took {0}ms", sw.Elapsed.TotalMilliseconds));
 		}
 
 		//Convert a mbm file to dds
@@ -448,12 +448,12 @@ namespace DDS4KSPcs
 			{
 				mbmTemp.AsBitmap().Save(gs, ImageFormat.Bmp);
 				
-				MainForm.Instance.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
-				MainForm.Instance.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (mbmTemp.Width * dRatio) + "x" + (mbmTemp.Height * dRatio));
+				MainForm.Log_WriteLine("LOG : Converting " + convParams.FilePath + " to " + fpNew);
+				MainForm.Log_WriteLine("    Format : " + form + ", normalmap : " + bNormal + ", res: " + (mbmTemp.Width * dRatio) + "x" + (mbmTemp.Height * dRatio));
 				
 				if((((mbmTemp.Width < cfg.MinRes_Resize_Width) | (mbmTemp.Height < cfg.MinRes_Resize_Height)) & (Math.Abs(dRatio - 1) > 0.0001f)))
 				{
-					MainForm.Instance.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
+					MainForm.Log_WriteLine("LOG : " + convParams.FilePath.Split('.').Last() + ", resolution is too low to be resized.");
 					dRatio = 1;
 				}
 				gs.Position = 0;
@@ -502,7 +502,7 @@ namespace DDS4KSPcs
 			
 			gs.Position = 0;
 			sw.Stop();
-			MainForm.Instance.Log_WriteLine(String.Format("FlipImage took {0}ms", sw.Elapsed.TotalMilliseconds));
+			MainForm.Log_WriteLine(String.Format("FlipImage took {0}ms", sw.Elapsed.TotalMilliseconds));
 		}
 
 		//Swizzlin'

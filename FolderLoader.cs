@@ -23,13 +23,17 @@ namespace DDS4KSPcs
 		}
 
 		//refresh infos before processing
-		public static void RefreshInfo(string sFolderPath, string formTitle, string formattedFolderStr, bool bUpdateLog)
+		public static void RefreshInfo(string sFolderPath, bool bUpdateLog, bool updateForm)
 		{
-			var sOldTitle = formTitle;
-			formTitle = formTitle + "-creating files lists"; //TODO: Broken in conversion to C#
-			Application.DoEvents();
+			if(updateForm)
+			{
+				MainForm.SetTitleAppend("-creating files lists");
+				Application.DoEvents();
+			}
+
 			fileList.Clear();
 			backupList.Clear();
+
 			//MBMs
 			var sT = Directory.GetFiles(sFolderPath, "*.mbm", SearchOption.AllDirectories);
 			var iMBMCount = sT.Length;
@@ -46,31 +50,39 @@ namespace DDS4KSPcs
 			sT = Directory.GetFiles(sFolderPath, "*.ddsified", SearchOption.AllDirectories);
 			var iBackupCount = sT.Length;
 			backupList.AddRange(sT);
+
 			//refresh labels
-			var pathSplit = sFolderPath.Split('\\');
-			formattedFolderStr = pathSplit[pathSplit.Length - 2] + "\\" + pathSplit.Last(); //TODO: Broken in conversion to C#
+			if(updateForm)
+			{
+				var pathSplit = sFolderPath.Split('\\');
+				MainForm.DisplaySelectedFolder(pathSplit[pathSplit.Length - 2] + "\\" + pathSplit.Last());
+			}
+
 			if(bUpdateLog)
 			{
-				MainForm.Instance.Log_WriteLine("-----");
-				MainForm.Instance.Log_WriteLine("Folder infos : ");
-				MainForm.Instance.Log_WriteLine("MBM files count : " + iMBMCount);
-				MainForm.Instance.Log_WriteLine("TGA files count : " + iTGACount);
-				MainForm.Instance.Log_WriteLine("PNG files count : " + iPNGCount);
-				MainForm.Instance.Log_WriteLine("Backup files count : " + iBackupCount);
-				MainForm.Instance.Log_WriteLine("-----");
+				MainForm.Log_WriteLine("-----");
+				MainForm.Log_WriteLine("Folder infos : ");
+				MainForm.Log_WriteLine("MBM files count : " + iMBMCount);
+				MainForm.Log_WriteLine("TGA files count : " + iTGACount);
+				MainForm.Log_WriteLine("PNG files count : " + iPNGCount);
+				MainForm.Log_WriteLine("Backup files count : " + iBackupCount);
+				MainForm.Log_WriteLine("-----");
 			}
-			formTitle = sOldTitle;
+			
+			if(updateForm)
+				MainForm.SetTitleAppend("");
 		}
 
 		//processing files lists
-		public static void ProcessFileLists(string sFolderPath, ProgressBar progressBar, Label lInfos, FolderProcessingParams cfg)
+		public static void ProcessFileLists(string sFolderPath, FolderProcessingParams cfg)
 		{
-			var sT = "";
-			RefreshInfo(sFolderPath, sT, sT, false);
+			RefreshInfo(sFolderPath, false, false);
 			FileSkipCount = 0;
+			
 			var iExcludeCount = 0;
 			var argHandler = new ArgumentsHandler();
 			var lConvParms = new List<ImageManager.ConversionParameters>();
+			
 			foreach(var s in fileList)
 			{
 				if(!argHandler.IsFileExcluded(s, cfg))
@@ -78,14 +90,16 @@ namespace DDS4KSPcs
 				else
 					iExcludeCount += 1;
 			}
+			
 			var iStep = 0;
-			MainForm.Instance.Log_WriteLine("-----");
-			MainForm.Instance.Log_WriteLine("Starting conversion of " + fileList.Count + " files.");
-			MainForm.Instance.Log_WriteLine("    MBM count : " + argHandler.Count_MBM + ".");
-			MainForm.Instance.Log_WriteLine("    TGA count : " + argHandler.Count_TGA + ".");
-			MainForm.Instance.Log_WriteLine("    PNG count : " + argHandler.Count_PNG + ".");
-			MainForm.Instance.Log_WriteLine(iExcludeCount + " files excluded, " + argHandler.Count_NoMipmaps + " files without mipmaps. " + (argHandler.Count_ForceNormal + argHandler.Count_ForceNotNormal) + " files will skip normal detection." + argHandler.Count_NoResize + " files will not be resized.");
-			MainForm.Instance.Log_WriteLine("-----");
+
+			MainForm.Log_WriteLine("-----");
+			MainForm.Log_WriteLine("Starting conversion of " + fileList.Count + " files.");
+			MainForm.Log_WriteLine("    MBM count : " + argHandler.Count_MBM + ".");
+			MainForm.Log_WriteLine("    TGA count : " + argHandler.Count_TGA + ".");
+			MainForm.Log_WriteLine("    PNG count : " + argHandler.Count_PNG + ".");
+			MainForm.Log_WriteLine(iExcludeCount + " files excluded, " + argHandler.Count_NoMipmaps + " files without mipmaps. " + (argHandler.Count_ForceNormal + argHandler.Count_ForceNotNormal) + " files will skip normal detection." + argHandler.Count_NoResize + " files will not be resized.");
+			MainForm.Log_WriteLine("-----");
 
 			var sw = Stopwatch.StartNew();
 			//processing
@@ -95,34 +109,35 @@ namespace DDS4KSPcs
 					ImageManager.ConvertMBMtoDDS(c, cfg);
 				else
 					ImageManager.ConvertFileToDDS(c, cfg);
+
 				iStep += 1;
-				progressBar.Value = Convert.ToInt32((iStep / lConvParms.Count) * 100);
-				lInfos.Text = "Processing " + Path.GetFileName(c.FilePath) + ", file " + iStep + "\\" + lConvParms.Count;
-				MainForm.Instance.Log_WriteLine("---");
+
+				MainForm.ReportProgress(Convert.ToInt32((iStep / lConvParms.Count) * 100), "Processing " + Path.GetFileName(c.FilePath) + ", file " + iStep + "\\" + lConvParms.Count);
+				MainForm.Log_WriteLine("---");
 				Application.DoEvents();
 			}
 
 			sw.Stop();
-			MainForm.Instance.Log_WriteLine("-----");
-			MainForm.Instance.Log_WriteLine(String.Format("Conversion done! {0} files processed in {1}ms.", lConvParms.Count, sw.Elapsed.TotalMilliseconds));
+			MainForm.Log_WriteLine("-----");
+			MainForm.Log_WriteLine(String.Format("Conversion done! {0} files processed in {1}ms.", lConvParms.Count, sw.Elapsed.TotalMilliseconds));
 			if(FileSkipCount > 0)
-				MainForm.Instance.Log_WriteLine(FileSkipCount + " files skipped, check log.txt for more informations.");
-			MainForm.Instance.Log_WriteLine("-----");
+				MainForm.Log_WriteLine(FileSkipCount + " files skipped, check log.txt for more informations.");
+			MainForm.Log_WriteLine("-----");
 		}
 
 		//backup files
-		public static void BackupFiles(string sFolderPath, ProgressBar progressBar, Label lInfos)
+		public static void BackupFiles(string sFolderPath)
 		{
-			var st = "";
 			var dontAskAgain = false;
 			var yesNo = false;
 			var deleteBackups = false;
-			RefreshInfo(sFolderPath, st, st, false);
 			var iStep = 0;
+
+			RefreshInfo(sFolderPath, false, false);
 			
-			MainForm.Instance.Log_WriteLine("-----");
-			MainForm.Instance.Log_WriteLine("Starting backup of " + backupList.Count + " files");
-			MainForm.Instance.Log_WriteLine("-----");
+			MainForm.Log_WriteLine("-----");
+			MainForm.Log_WriteLine("Starting backup of " + backupList.Count + " files");
+			MainForm.Log_WriteLine("-----");
 			
 			foreach(var s in backupList)
 			{
@@ -146,33 +161,32 @@ namespace DDS4KSPcs
 						File.Delete(sBackupFile);
 						File.Move(s, sBackupFile);
 
-						MainForm.Instance.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
+						MainForm.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
 					}
 					else
 					{
 						if(deleteBackups)
 							File.Delete(s);
 
-						MainForm.Instance.Log_WriteLine("Skipping backup of " + sBackupFile);
+						MainForm.Log_WriteLine("Skipping backup of " + sBackupFile);
 					}
 				}
 				else
 				{
 					File.Move(s, sBackupFile);
-					MainForm.Instance.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
+					MainForm.Log_WriteLine("Reverting " + sDDSToDelete + " to " + sBackupFile);
 				}
 
 				iStep += 1;
-				progressBar.Value = Convert.ToInt32((iStep / backupList.Count) * 100);
-				lInfos.Text = "Reverting " + Path.GetFileName(sBackupFile) + ", file " + iStep + "\\" + backupList.Count;
 				
-				MainForm.Instance.Log_WriteLine("---");
+				MainForm.ReportProgress(Convert.ToInt32((iStep / backupList.Count) * 100), "Reverting " + Path.GetFileName(sBackupFile) + ", file " + iStep + "\\" + backupList.Count);
+				MainForm.Log_WriteLine("---");
 				Application.DoEvents();
 			}
 
-			MainForm.Instance.Log_WriteLine("-----");
-			MainForm.Instance.Log_WriteLine("Backup done! " + backupList.Count + " files processed.");
-			MainForm.Instance.Log_WriteLine("-----");
+			MainForm.Log_WriteLine("-----");
+			MainForm.Log_WriteLine("Backup done! " + backupList.Count + " files processed.");
+			MainForm.Log_WriteLine("-----");
 		}
 
 		//novelty! a new, shiny class to handle arguments properly, instead of putting them in some lists (well, there are still lists, but with some better management)

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Windows.Forms;
 using Ookii.Dialogs;
@@ -29,7 +30,7 @@ namespace DDS4KSPcs
 		}
 
 		//Form loading
-		private void MainForm_Load(System.Object sender, System.EventArgs e)
+		private void MainForm_Load(Object sender, EventArgs e)
 		{
 			//create an emty log file if none exist
 			if(File.Exists(logFile))
@@ -109,9 +110,10 @@ namespace DDS4KSPcs
 		}
 
 		//File/Open
-		private void OpenToolStripMenuItem_Click(System.Object sender, System.EventArgs e)
+		private void OpenToolStripMenuItem_Click(Object sender, EventArgs e)
 		{
-			var folderCFG = new FolderProcessingParams();
+			//var folderCFG = new FolderProcessingParams(); //Not sure what this is for, doesn't do anything
+
 			var ofd = new OpenFileDialog {Title = "Open file", Filter = "Common KSP's image format | *.mbm; *.tga; *.png"};
 
 			if(ofd.ShowDialog() == DialogResult.OK)
@@ -128,13 +130,16 @@ namespace DDS4KSPcs
 		}
 
 		//File/export
-		private void ExportToDDSToolStripMenuItem_Click(System.Object sender, System.EventArgs e)
+		private void ExportToDDSToolStripMenuItem_Click(Object sender, EventArgs e)
 		{
+			//Not sure what these are for, they dont do anything
+			/*
 			var bNormal = false;
 			var bMipMap = true;
 			var bUncompressed = false;
 			var bDeleteOnSuccess = true;
 			double dResizeRatio = 1;
+			*/
 			var dlgSingleFile = new SingleFileDialog();
 			if(dlgSingleFile.CustomShowDialog(loadedFile) == DialogResult.OK)
 			{
@@ -143,13 +148,13 @@ namespace DDS4KSPcs
 		}
 
 		//File/Quit
-		private void QuitToolStripMenuItem_Click(System.Object sender, System.EventArgs e)
+		private void QuitToolStripMenuItem_Click(Object sender, EventArgs e)
 		{
 			Close();
 		}
 
 		//Folder/Open
-		private void OpenToolStripMenuItem1_Click(System.Object sender, System.EventArgs e)
+		private void OpenToolStripMenuItem1_Click(Object sender, EventArgs e)
 		{
 			var openFileDialog = new VistaFolderBrowserDialog();
 			var bLaunch = false;
@@ -174,14 +179,14 @@ namespace DDS4KSPcs
 				//refresh the "folder" container
 				loadedFolder = openFileDialog.SelectedPath;
 				//show informations about folder
-				FolderLoader.RefreshInfo(openFileDialog.SelectedPath, Text, lbl_infos_1.Text, true);
+				FolderLoader.RefreshInfo(openFileDialog.SelectedPath, true, true);
 			}
 			CheckToolStripItems();
 			CheckGroupBoxItems();
 		}
 
 		//Folder/export all
-		private void ExportAllToDDSToolStripMenuItem_Click(System.Object sender, System.EventArgs e)
+		private void ExportAllToDDSToolStripMenuItem_Click(Object sender, EventArgs e)
 		{
 			var folderCFG = new FolderProcessingParams();
 			var dlgFolder = new FolderDialog();
@@ -192,14 +197,14 @@ namespace DDS4KSPcs
 				lbl_PBInfos.Visible = true;
 				lbl_PBInfos.Text = "";
 				PB_main.Value = 0;
-				FolderLoader.ProcessFileLists(loadedFolder, PB_main, lbl_PBInfos, folderCFG);
+				FolderLoader.ProcessFileLists(loadedFolder, folderCFG);
 				PB_main.Visible = false;
 				lbl_PBInfos.Visible = false;
 			}
 		}
 
 		//Folder/revert from backup
-		private void RevertFromBackupToolStripMenuItem_Click(System.Object sender, System.EventArgs e)
+		private void RevertFromBackupToolStripMenuItem_Click(Object sender, EventArgs e)
 		{
 			if(MessageBox.Show("This option will revert all converted DDS to their original format in the selected folder, if a backup file is available. Continue?", "Are you sure?", MessageBoxButtons.YesNo) == DialogResult.Yes)
 			{
@@ -207,19 +212,58 @@ namespace DDS4KSPcs
 				lbl_PBInfos.Visible = true;
 				lbl_PBInfos.Text = "";
 				PB_main.Value = 0;
-				FolderLoader.BackupFiles(loadedFolder, PB_main, lbl_PBInfos);
+				FolderLoader.BackupFiles(loadedFolder);
 				PB_main.Visible = false;
 				lbl_PBInfos.Visible = false;
 			}
 		}
 
 		//function to write something in the log. No particular reason to have it here, I just don't really know where to put it...
-		public void Log_WriteLine(string sLine)
+		public static void Log_WriteLine(string sLine)
 		{
-			TB_Log.AppendText(System.Environment.NewLine + sLine);
-			var sw = File.AppendText(logFile);
-			sw.WriteLine(sLine);
-			sw.Close();
+			if(Instance.TB_Log.InvokeRequired)
+				Instance.TB_Log.Invoke((Action<string>)Log_WriteLine, sLine);
+			else
+			{
+				Instance.TB_Log.AppendText(Environment.NewLine + sLine);
+
+				using(var writer = File.AppendText(Instance.logFile))
+					writer.WriteLine(sLine);
+			}
+		}
+
+		public static void ReportProgress(int progressValue, string progressText)
+		{
+			if(Instance.PB_main.InvokeRequired)
+				Instance.PB_main.Invoke((Action<int, string>)ReportProgress, progressValue, progressText);
+			else
+			{
+				Instance.PB_main.Value = progressValue;
+				Instance.lbl_PBInfos.Text = progressText;
+			}
+		}
+
+		private string originalTitle;
+
+		public static void SetTitleAppend(string title)
+		{
+			if(Instance.InvokeRequired)
+				Instance.Invoke((Action<string>) SetTitleAppend, title);
+			else
+			{
+				if(Instance.originalTitle == null)
+					Instance.originalTitle = Instance.Text;
+
+				Instance.Text = Instance.originalTitle + title;
+			}
+		}
+
+		public static void DisplaySelectedFolder(string folder)
+		{
+			if(Instance.lbl_infos_1.InvokeRequired)
+				Instance.lbl_infos_1.Invoke((Action<string>) DisplaySelectedFolder, folder);
+			else
+				Instance.lbl_infos_1.Text = folder;
 		}
 	}
 }

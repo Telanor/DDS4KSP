@@ -69,6 +69,10 @@ Screenshots
 //StageRecovery
 StageRecovery -nm -nr -nn
 //
+//TestFlight interface elements will cause DDS4KSP to crash
+TestFlight\Resources -nn -nm -nr
+TestFlight\Resources\Textures -nn -nm -nr
+//
 //TextureReplacer's helmet visor, this prog still can't get the p8 format, but nvdxt or crunch could probably do it.
 TextureReplacer\EnvMap
 //

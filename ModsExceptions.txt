@@ -78,3 +78,9 @@ TextureReplacer\EnvMap
 //
 //Toolbar, no mipmaps and no resize
 000_Toolbar -nm -nr
+//
+// SQUAD Folder (esp. Flags)
+Squad\Flags
+//
+// Additionals (had conversion errors):
+StageRecovery

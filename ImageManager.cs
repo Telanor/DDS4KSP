@@ -328,7 +328,10 @@ namespace DDS4KSPcs
 			texture.Dispose();
 
 			//flip
-			//FlipImage(gs); //no more for KSP integrated DDS loader!
+			if (cfg.FlipImages)
+			{
+			  FlipImage(gs); //no more automatic flipping for KSP integrated DDS loader!
+			}
 
 			//switch to tga format if swizzling 
 			if(bNormal)

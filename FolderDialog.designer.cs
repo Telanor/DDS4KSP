@@ -48,6 +48,7 @@ namespace DDS4KSPcs
 			this.CB_format_incPNG = new System.Windows.Forms.CheckBox();
 			this.CB_format_incTGA = new System.Windows.Forms.CheckBox();
 			this.CB_format_incMBM = new System.Windows.Forms.CheckBox();
+			this.CB_format_FLIP = new System.Windows.Forms.CheckBox();
 			this.RB_format_uncompressed = new System.Windows.Forms.RadioButton();
 			this.RB_format_compressed = new System.Windows.Forms.RadioButton();
 			this.GB_resize = new System.Windows.Forms.GroupBox();
@@ -357,6 +358,19 @@ namespace DDS4KSPcs
 			this.CB_format_incMBM.TabIndex = 2;
 			this.CB_format_incMBM.Text = "*.mbm";
 			this.CB_format_incMBM.UseVisualStyleBackColor = true;
+			
+			// CB_format_FLIP
+			this.CB_format_FLIP.AutoSize = true;
+			this.CB_format_FLIP.FlatStyle = System.Windows.Forms.FlatStyle.System;
+			this.CB_format_FLIP.Location = new System.Drawing.Point(127, 100);
+			this.CB_format_FLIP.Name = "CB_format_FLIP";
+			this.CB_format_FLIP.Size = new System.Drawing.Size(61, 18);
+			this.CB_format_FLIP.TabIndex = 1;
+			this.CB_format_FLIP.Text = "Flip";
+			this.CB_format_FLIP.UseVisualStyleBackColor = true;
+			
+	
+			
 			// 
 			// RB_format_uncompressed
 			// 
@@ -557,6 +571,7 @@ namespace DDS4KSPcs
 		internal System.Windows.Forms.CheckBox CB_format_incPNG;
 		internal System.Windows.Forms.CheckBox CB_format_incTGA;
 		internal System.Windows.Forms.CheckBox CB_format_incMBM;
+		internal System.Windows.Forms.CheckBox CB_format_FLIP;
 		internal System.Windows.Forms.ToolTip ToolTip1;
 		internal System.Windows.Forms.GroupBox GB_mipmap;
 		internal System.Windows.Forms.GroupBox GB_normal;

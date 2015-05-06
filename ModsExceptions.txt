@@ -82,5 +82,7 @@ TextureReplacer\EnvMap
 // SQUAD Folder (esp. Flags)
 Squad\Flags
 //
-// Additionals (had conversion errors):
-StageRecovery
+// Exclude everything that seems to be an icon:
+// (will actually match like *icon*, so if "icon" appears in the file or folder name, it is skipped!)
+icon
+Icon

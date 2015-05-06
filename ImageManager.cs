@@ -46,8 +46,8 @@ namespace DDS4KSPcs
 		}
 
 		//this module will handle everything related to DX: loading and saving files, and also swizzling if necessary
-		private static Device dev;
-		private static PresentParameters pParameters;
+        private static Device dev = null;
+        private static PresentParameters pParameters = null;
 		public static int MinHeightForCompressed = 64;
 		public static int MinWidthForCompressed = 64;
 
@@ -61,6 +61,13 @@ namespace DDS4KSPcs
 			DDSRgba = 1,
 			DDSNormal = 2
 		}
+
+
+        static ImageManager()
+        {
+            //default empty static constructor
+        }
+
 
 		//called once at startup
 		public static void Init()
@@ -330,6 +337,7 @@ namespace DDS4KSPcs
 			//flip
 			if (cfg.FlipImages)
 			{
+              MainForm.Log_WriteLine("Flipping image...");
 			  FlipImage(gs); //no more automatic flipping for KSP integrated DDS loader!
 			}
 

@@ -78,3 +78,11 @@ TextureReplacer\EnvMap
 //
 //Toolbar, no mipmaps and no resize
 000_Toolbar -nm -nr
+//
+// SQUAD Folder (esp. Flags)
+Squad\Flags
+//
+// Exclude everything that seems to be an icon:
+// (will actually match like *icon*, so if "icon" appears in the file or folder name, it is skipped!)
+icon
+Icon

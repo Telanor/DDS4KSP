@@ -16,6 +16,7 @@ namespace DDS4KSPcs
 		public int MinRes_Process_Width { get; set; }
 		public int MinRes_Process_Height { get; set; }
 		public bool IgnoreExceptions { get; set; }
+		public bool FlipImages { get; set; }	//for pre-KSP 1.0
 
 		//constructor, all default parameters are set from here
 		public FolderProcessingParams()
@@ -29,6 +30,7 @@ namespace DDS4KSPcs
 			DeleteFilesOnSuccess = false;
 			BackupFile = true;
 			IgnoreExceptions = false;
+			FlipImages = false;
 			MinRes_Resize_Height = 64;
 			MinRes_Resize_Width = 64;
 			MinRes_Process_Width = 8;

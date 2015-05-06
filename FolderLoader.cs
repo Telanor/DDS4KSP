@@ -298,11 +298,15 @@ namespace DDS4KSPcs
 				//No idea what this does
 				for(var i = 0; i <= excludedList.Count - 1; i++)
 				{
-					if(sFilePath.Contains(excludedList[i]))
-					{
-						i = excludedList.Count - 1;
-						b = true;
-					}
+                    if(sFilePath.Contains(excludedList[i]))
+                    {
+                        i = excludedList.Count - 1;
+                        b = true;
+                        // performance optimization with long exclude lists:
+                        // after first match dont check rest of exclusions
+                        return b;
+                    }
+
 				}
 				return b;
 			}
@@ -442,3 +446,4 @@ namespace DDS4KSPcs
 		}
 	}
 }
+

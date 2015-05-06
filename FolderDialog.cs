@@ -45,6 +45,7 @@ namespace DDS4KSPcs
 				CFG.ProcessMBMs = CB_format_incMBM.Checked;
 				CFG.ProcessTGAs = CB_format_incTGA.Checked;
 				CFG.ProcessPNGs = CB_format_incPNG.Checked;
+                CFG.FlipImages =  CB_format_FLIPImages.Checked;
 				//normals
 				CFG.NormalsManagement = CB_normal_ConvSelect.SelectedIndex;
 				//mipmaps
@@ -109,6 +110,7 @@ namespace DDS4KSPcs
 			CB_format_incMBM.Checked = folderCFG.ProcessMBMs;
 			CB_format_incTGA.Checked = folderCFG.ProcessTGAs;
 			CB_format_incPNG.Checked = folderCFG.ProcessPNGs;
+            CB_format_FLIPImages.Checked = folderCFG.FlipImages;
 			//normals
 			CB_normal_ConvSelect.SelectedIndex = folderCFG.NormalsManagement;
 			//mipmaps

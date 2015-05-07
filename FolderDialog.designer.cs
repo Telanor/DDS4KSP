@@ -44,6 +44,7 @@ namespace DDS4KSPcs
             this.Label4 = new System.Windows.Forms.Label();
             this.CB_resize_Ratio = new System.Windows.Forms.ComboBox();
             this.GB_format = new System.Windows.Forms.GroupBox();
+            this.CB_format_FLIPImages = new System.Windows.Forms.CheckBox();
             this.Label5 = new System.Windows.Forms.Label();
             this.CB_format_incPNG = new System.Windows.Forms.CheckBox();
             this.CB_format_incTGA = new System.Windows.Forms.CheckBox();
@@ -60,7 +61,6 @@ namespace DDS4KSPcs
             this.CB_mipmap_Generate = new System.Windows.Forms.CheckBox();
             this.GB_normal = new System.Windows.Forms.GroupBox();
             this.CB_normal_ConvSelect = new System.Windows.Forms.ComboBox();
-            this.CB_format_FLIPImages = new System.Windows.Forms.CheckBox();
             this.TableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.NUD_misc_MinWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NUD_misc_MinHeight)).BeginInit();
@@ -318,6 +318,19 @@ namespace DDS4KSPcs
             this.GB_format.TabStop = false;
             this.GB_format.Text = "Format";
             // 
+            // CB_format_FLIPImages
+            // 
+            this.CB_format_FLIPImages.AutoSize = true;
+            this.CB_format_FLIPImages.Checked = true;
+            this.CB_format_FLIPImages.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.CB_format_FLIPImages.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.CB_format_FLIPImages.Location = new System.Drawing.Point(9, 108);
+            this.CB_format_FLIPImages.Name = "CB_format_FLIPImages";
+            this.CB_format_FLIPImages.Size = new System.Drawing.Size(175, 18);
+            this.CB_format_FLIPImages.TabIndex = 6;
+            this.CB_format_FLIPImages.Text = "Flip png/tag? (usually needed)";
+            this.CB_format_FLIPImages.UseVisualStyleBackColor = true;
+            // 
             // Label5
             // 
             this.Label5.AutoSize = true;
@@ -494,17 +507,6 @@ namespace DDS4KSPcs
             this.CB_normal_ConvSelect.Name = "CB_normal_ConvSelect";
             this.CB_normal_ConvSelect.Size = new System.Drawing.Size(181, 21);
             this.CB_normal_ConvSelect.TabIndex = 0;
-            // 
-            // CB_format_FLIPImages
-            // 
-            this.CB_format_FLIPImages.AutoSize = true;
-            this.CB_format_FLIPImages.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.CB_format_FLIPImages.Location = new System.Drawing.Point(9, 108);
-            this.CB_format_FLIPImages.Name = "CB_format_FLIPImages";
-            this.CB_format_FLIPImages.Size = new System.Drawing.Size(182, 18);
-            this.CB_format_FLIPImages.TabIndex = 6;
-            this.CB_format_FLIPImages.Text = "Flip png/tag? (no for KSP 1.0+!)";
-            this.CB_format_FLIPImages.UseVisualStyleBackColor = true;
             // 
             // FolderDialog
             // 

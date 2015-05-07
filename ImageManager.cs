@@ -279,8 +279,8 @@ namespace DDS4KSPcs
 			if(((iInfos.Width < MinHeightForCompressed) | (iInfos.Height < MinHeightForCompressed)))
 			{
 				if(((form == Format.Dxt1) | (form == Format.Dxt5)))
-					MainForm.Log_WriteLine("LOG : Resolution is considered too low for DXT compression. Switching to uncompressed format for better quality.");
-				form = Format.A8R8G8B8;
+					MainForm.Log_WriteLine("LOG : Resolution is considered too low for DXT compression. DISABLING MIPMAPS!");
+				//form = Format.A8R8G8B8;
 				mipmapLevel = 1;
 			}
 
@@ -358,9 +358,10 @@ namespace DDS4KSPcs
 
 			//another attempt to flush memory: the program tend to crash if too much large textures are converted
 			//though, if some smaller textures are converted in between, memory is flushed correctly...
-			dev.Reset(pParameters);
+			//dev.Reset(pParameters);
 			
 			//saving the texture
+            gs.Position = 0;
 			texture = TextureLoader.FromStream(dev, gs, (int) (iCorWidth * dRatio), (int) (iCorHeight * dRatio), mipmapLevel, Usage.None, form, Pool.SystemMemory, Filter.Triangle | Filter.DitherDiffusion, Filter.Triangle | Filter.DitherDiffusion, 0);
 			TextureLoader.Save(fpNew, ImageFileFormat.Dds, texture);
 			//delete unused stuff

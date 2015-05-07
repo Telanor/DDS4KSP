@@ -30,7 +30,7 @@ namespace DDS4KSPcs
 			DeleteFilesOnSuccess = false;
 			BackupFile = true;
 			IgnoreExceptions = false;
-			FlipImages = false;
+			FlipImages = true;
 			MinRes_Resize_Height = 64;
 			MinRes_Resize_Width = 64;
 			MinRes_Process_Width = 8;
